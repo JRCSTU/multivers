@@ -4,7 +4,7 @@ wheel==0.30.0
 watchdog==0.8.3
 flake8==3.5.0
 coverage==4.5.1
-Sphinx==1.4.8
+Sphinx==1.7.0
 
 pytest==2.9.2
 pytest-runner==2.11.1
