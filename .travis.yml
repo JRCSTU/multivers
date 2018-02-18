@@ -8,18 +8,18 @@ python:
   - 3.6
   - 3.7-dev
 
-# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+matrix:
+  allow_failures:
+    - python: 3.7-dev
+
 install:
-  - pip install --upgrade setuptools pip
+  - pip install --upgrade setuptools pip pytest-cov python-coveralls
   - pip install .[test]
   - python setup.py build bdist_wheel
 
-# command to run tests, e.g. python setup.py test
 script:
   - pytest --pyargs -v tests
   - flake8 --show-source
 
-
-matrix:
-  allow_failures:
-    - python: 3.7-dev
+after_success:
+    - if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then coveralls; fi
