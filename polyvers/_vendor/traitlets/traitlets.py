@@ -440,8 +440,16 @@ class BaseDescriptor(object):
         This method is called by :meth:`HasTraits.__new__` and in the
         :meth:`BaseDescriptor.instance_init` method of descriptors holding
         other descriptors.
+
+        :raise _RecursedError:
+            if descriptor has been visited before
         """
-        pass
+        ## Break infinity when assigning recursive-traits.
+        #
+        visited = obj._instance_init_visited
+        if id(self) in visited:
+            raise _RecursedError()
+        visited.add(id(self))
 
     def _lineage(self):
         parent = self
@@ -1047,6 +1055,8 @@ class HasDescriptors(six.with_metaclass(MetaHasDescriptors, object)):
         args = args[1:]
 
         self._cross_validation_lock = False
+        self._instance_init_visited = set()
+
         cls = self.__class__
         for key in dir(cls):
             # Some descriptors raise AttributeError like zope.interface's
@@ -1071,7 +1081,10 @@ class HasTraits(six.with_metaclass(MetaHasTraits, HasDescriptors)):
         self._trait_values = {}
         self._trait_notifiers = {}
         self._trait_validators = {}
-        super(HasTraits, self).setup_instance(*args, **kwargs)
+        try:
+            super(HasTraits, self).setup_instance(*args, **kwargs)
+        except _RecursedError:
+            pass  # ok, inited all
 
     def __init__(self, *args, **kwargs):
         # Allow trait values to be set using keyword arguments.
@@ -1765,7 +1778,6 @@ class Type(ClassBasedTraitType):
             return result + ' (or None)'
         return result
 
-    @norecurse
     def instance_init(self, obj):
         super(Type, self).instance_init(obj)
         self._resolve_classes()
@@ -1924,8 +1936,8 @@ class Instance(ClassBasedTraitType):
             return the_types
 
     def instance_init(self, obj):
-        self._resolve_classes()
         super(Instance, self).instance_init(obj)
+        self._resolve_classes()
 
     def _resolve_classes(self):
         if isinstance(self.klass, six.string_types):
@@ -2040,9 +2052,9 @@ class Union(TraitType):
             trait_type.class_init(cls, None, self)
 
     def instance_init(self, obj):
+        super(Union, self).instance_init(obj)
         for trait_type in reversed(self.trait_types):
             trait_type.instance_init(obj)
-        super(Union, self).instance_init(obj)
 
     def validate(self, obj, value):
         with obj.cross_validation_lock:
@@ -2762,10 +2774,10 @@ class Collection(Container):
                 trait.class_init(cls, None, self)
 
     def instance_init(self, obj):
+        super(Container, self).instance_init(obj)
         for trait in self._traits:
             if isinstance(trait, TraitType):
                 trait.instance_init(obj)
-        super(Container, self).instance_init(obj)
 
     def validate_elements(self, obj, value):
         if not self._traits:
@@ -2820,9 +2832,9 @@ class Sequence(Mutable, Container):
             self._trait.class_init(cls, None, self)
 
     def instance_init(self, obj):
+        super(Sequence, self).instance_init(obj)
         if isinstance(self._trait, TraitType):
             self._trait.instance_init(obj)
-        super(Sequence, self).instance_init(obj)
 
     def validate(self, obj, value):
         value = super(Sequence, self).validate(obj, value)
@@ -3057,6 +3069,7 @@ class Mapping(Mutable, Container):
                 trait.class_init(cls, None, self)
 
     def instance_init(self, obj):
+        super(Mapping, self).instance_init(obj)
         if self._value_trait is not None:
             self._value_trait.instance_init(obj)
         if self._key_trait is not None:
@@ -3064,7 +3077,6 @@ class Mapping(Mutable, Container):
         if self._trait_mapping is not None:
             for trait in self._trait_mapping.values():
                 trait.instance_init(obj)
-        super(Mapping, self).instance_init(obj)
 
     def validate_elements(self, obj, new):
         key_trait, value_trait = self._key_trait, self._value_trait

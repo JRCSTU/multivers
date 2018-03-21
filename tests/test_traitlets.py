@@ -16,3 +16,17 @@ def test_traitlets_recurse():
     ## Class definition will crash if not recursion broken!
     class C(trt.HasTraits):
         t = stack
+
+    c = C()
+    c.t = (1, [])
+    assert c.t == (1, [])
+
+    c = C(t=(1, []))
+    assert c.t == (1, [])
+
+    c.t[1].append((22, []))
+    c.t[1].append((33, []))
+    assert c.t == (1, [(22, []), (33, [])])
+
+    c = C(t=(1, [(22, [(333, [])])]))
+    assert c.t == (1, [(22, [(333, [])])])
