@@ -9,4 +9,4 @@ pip-tools==1.11.0
 pytest==3.5.0
 pytest-runner==4.2
 pytest-cov==2.5.1
-mypy==0.580; python_version >= '3.4'
+mypy==0.590; python_version >= '3.4'
