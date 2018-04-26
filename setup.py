@@ -33,6 +33,7 @@ requirements = [
     'ipython_genutils',         # by vendorized `traitlets`
     'spectate',                 # by vendorized `traitlets`
     'ruamel.yaml>=0.15.37',     # fix PY3.7 ruamel/yaml#187
+    "contextvars; python_version<'3.7'",  # for yaml-exporting cmdlets
     'packaging==17.1',
 ]
 

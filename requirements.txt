@@ -11,5 +11,6 @@ logutils==0.3.5           # via rainbow-logging-handler
 rainbow_logging_handler==2.2.2
 spectate==0.1.0
 toolz==0.9.0
-packaging==17.1
 ruamel.yaml==0.15.37
+contextvars==2.1; python_version < '3.7'
+packaging==17.1

@@ -16,6 +16,7 @@ import logging
 from boltons.setutils import IndexedSet as iset
 
 import polyversion as pvlib
+import textwrap as tw
 
 from . import APPNAME, __version__, __updated__, pvtags, pvproject
 from ._vendor import traitlets as trt
@@ -55,7 +56,7 @@ def merge_dict(dct, merge_dct):
             dct[k] = merge_dct[k]
 
 
-class PolyversCmd(cmdlets.Cmd):
+class PolyversCmd(cmdlets.Cmd, yu.YAMLable):
     """
     Bump independently PEP-440 versions of sub-project in Git monorepos.
 
@@ -151,20 +152,21 @@ class PolyversCmd(cmdlets.Cmd):
         -- sample: --pdata foo=foo/fpath
         """)
 
+    ## TODO: rename to autodiscovery_...
     autodiscover_subproject_projects = ListTrait(
         autotrait.AutoInstance(pvproject.Project),
         default_value=[{
             'engraves': [{
                 'globs': ['**/setup.py'],
                 'grafts': [
-                    {'regex': r'''
+                    {'regex': tw.dedent(r'''
                         (?xm)
                             \b(name|PROJECT|APPNAME|APPLICATION)
                             \ *=\ *
                             (['"])
                                 (?P<pname>[\w\-.]+)
                             \2
-                    '''}
+                    ''')}
                 ]
             }]
         }],
@@ -184,19 +186,20 @@ class PolyversCmd(cmdlets.Cmd):
         - A Project is identified only if file(s) are globbed AND regexp(s) matched.
         """)
 
+    ## TODO: rename to autodiscovery_...
     autodiscover_version_scheme_projects = TupleTrait(
         autotrait.AutoInstance(pvproject.Project), autotrait.AutoInstance(pvproject.Project),
         default_value=({
             'pname': '<PVTAG>',
             'tag_vprefixes': pvlib.tag_vprefixes,
             'pvtag_frmt': '*-v*',
-            'pvtag_regex': r"""
+            'pvtag_regex': tw.dedent(r"""
                 (?xmi)
                     ^(?P<pname>[A-Z0-9]|[A-Z0-9][A-Z0-9._-]*?[A-Z0-9])
                     -
                     v(?P<version>\d[^-]*)
                     (?:-(?P<descid>\d+-g[a-f\d]+))?$
-            """}, {
+            """)}, {
             'pname': '<VTAG>',
             'tag_vprefixes': pvlib.tag_vprefixes,
             'pvtag_frmt': pvlib.vtag_frmt,
@@ -373,7 +376,7 @@ class InitCmd(_SubCmd):
             yield "TODO: update config-file '%s'...." % cfgpath
         else:
             cfgpath = Path(self.git_root) / ('%s.yaml' % self.config_basename)
-            cfg = self.generate_config_file_yaml()
+            cfg = self.generate_config_file_yaml(self.all_app_configurables, self.config)
             self.log.debug("Writing config to yaml file '%s': \n%s",
                            cfgpath, pformat(cfg))
             with io.open(cfgpath, 'wt', encoding='utf-8') as fout:

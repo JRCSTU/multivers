@@ -1123,23 +1123,39 @@ class Cmd(trc.Application, Spec):
 ## patch traits ##
 ##################
 
-def class_config_yaml(cls, outer_cfg, classes=None):
+def _dumpable_trait_value(trait, config):
+    owner_class = trait.this_class
+    owner_classname = owner_class.__name__
+    trait_name = trait.name
+    if '%s.%s' % (owner_classname, trait_name) in config:
+        cfg_value = config[owner_classname][trait_name]
+        default_value = trait.default()
+        if cfg_value != default_value:
+            return cfg_value, default_value
+
+
+def class_config_yaml(cls, outer_cfg,
+                      classes=None,
+                      config: trc.Config = None):
     """Get the config section for this Configurable.
 
-    Parameters
-    ----------
-    classes: list, optional
-        The list of other classes in the config file.
-        Used to reduce redundant information.
+    :param list classes:
+        (optional) The list of other classes in the config file,
+        used to reduce redundant help descriptions.
+        If given, only params from these classes reported.
+    :param config:
+        If given, only what is contained there is included in generated yaml,
+        with help-descriptions from classes, only where class default-values
+        differ from the values contained in this dictionary.
     """
-    from ..utils import yamlutil
-    from ruamel.yaml.comments import CommentedMap  # @UnresolvedImport
+    from ..utils import yamlutil as yu
+    from ruamel.yaml.comments import CommentedMap
     from ipython_genutils.text import wrap_paragraphs
     import textwrap as tw
 
     def comment(s):
         """return a commented, wrapped block."""
-        return '\n\n'.join(wrap_paragraphs(s, 78)) + '\n'
+        return '\n \n '.join(wrap_paragraphs(s, 78)) + '\n '
 
     # section header
     breaker = '#' * 76
@@ -1149,25 +1165,27 @@ def class_config_yaml(cls, outer_cfg, classes=None):
     )
 
     s = "%s(%s) configuration" % (cls.__name__, parent_classes)
-    head_lines = [breaker, s, breaker]
+    head_lines = ['', '', breaker, s, breaker]
     # get the description trait
-    desc = cls.class_traits().get('description')
+    desc = class_help_description_lines(cls)
     if desc:
-        desc = desc.default_value
-    if not desc:
-        # no description from trait, use __doc__
-        desc = getattr(cls, '__doc__', '')
-    if desc:
-        head_lines.append(comment(desc))
-        head_lines.append('')
+        head_lines.append(comment('\n'.join(desc)))
     outer_cfg[cls.__name__] = cfg = CommentedMap()
-    cfg.yaml_set_start_comment('\n'.join(head_lines))
+    outer_cfg.yaml_set_comment_before_after_key(cls.__name__,
+                                                '\n'.join(head_lines))
 
     for name, trait in sorted(cls.class_traits(config=True).items()):
-        cfg[name] = trait.default()
+        if config is None:
+            cfg[name] = default_value = trait.default()
+        else:
+            dumpables = _dumpable_trait_value(trait, config)
+            if dumpables:
+                cfg[name], default_value = dumpables
+            else:
+                continue
+
         trait_lines = []
-        default_value = trait.default()
-        default_repr = yamlutil.ydumps(default_value)
+        default_repr = yu.ydumps(default_value)
         if default_repr and default_repr.count('\n') > 1 and default_repr[0] != '\n':
             default_repr = tw.indent('\n' + default_repr, ' ' * 9)
 
@@ -1191,7 +1209,9 @@ def class_config_yaml(cls, outer_cfg, classes=None):
                 trait_lines.append(comment(trait.help.split('\n', 1)[0]))
             trait_lines.append('See also: %s.%s' % (defining_class.__name__, name))
 
-        cfg.yaml_set_comment_before_after_key(name, before='\n'.join(trait_lines))
+        cfg.yaml_set_comment_before_after_key(name,
+                                              before='\n'.join(trait_lines),
+                                              indent=2)
 
 
 trc.Configurable.class_config_yaml = classmethod(class_config_yaml)  # type: ignore
@@ -1245,37 +1265,50 @@ def generate_class_hierarchy_text(classes):
     return '\n'.join(class_line(cls) for cls in classes)
 
 
-def generate_config_file_yaml(self, classes=None):
-    """generate default config file from Configurables"""
-    from ruamel.yaml.comments import CommentedMap  # @UnresolvedImport
+def generate_config_file_yaml(self, classes=None, config: trc.Config = None):
+    """
+    generate default config file from Configurables
+
+    :param config:
+        If given, only what is contained there is included in generated yaml,
+        with help-descriptions from classes, only where class default-values
+        differ from the values contained in this dictionary.
+    """
+    from ruamel.yaml.comments import CommentedMap
     import ipython_genutils.text as tw
 
     classes = self.classes if classes is None else classes
 
-    def mro_for_specs(cls):
+    def mro_till_specs(cls):
         return [sub for sub in cls.mro() if issubclass(sub, Spec)]
 
-    ordered_classes = order_class_hierarchy(
-        classes,
-        mro_func=mro_for_specs)
+    def mro_till_configurables(cls):
+        return [sub for sub in cls.mro() if issubclass(sub, trc.Configurable)]
 
+    config_classes = set(self._classes_with_config_traits(classes))
+    ## Order: subclass at the top.
+    #  Filtering needed because `order_class_hierarchy()` brings full mro().
+    ordered_classes = [cls
+                       for cls in order_class_hierarchy(classes)
+                       if cls in config_classes]
     class_hiearchy = generate_class_hierarchy_text(ordered_classes)
     start_comment = tw.dedent("""
-        ####################################
-        Configuration file for `%s`.
-
-        Class-hierarchy:
+        ############################################################################
+        Configuration hierarchy for `%s`:
         %s
-        ####################################
+        ############################################################################
 
     """) % (self.root_object().name, class_hiearchy)
 
     cfg = CommentedMap()
     cfg.yaml_set_start_comment(start_comment)
 
-    config_classes = list(self._classes_with_config_traits(classes))
-    for cls in config_classes:
-        cls.class_config_yaml(cfg)
+    for cls in ordered_classes[::-1]:  # Inverted order from title's class-list, above.
+        cls.class_config_yaml(cfg, config=config)
+
+    for k, v in cfg.copy().items():
+        if not v:
+            del cfg[k]
 
     return cfg
 

@@ -17,6 +17,7 @@ import logging
 import re
 
 import polyversion as pvlib
+import textwrap as tw
 
 from . import vermath
 from ._vendor.traitlets import traitlets as trt
@@ -533,32 +534,32 @@ class Project(cmdlets.Replaceable, cmdlets.Printable, yu.YAMLable, cmdlets.Spec)
             'grafts': [{
                 ## TODO: add `Graft.desc` field
                 ## version must be in its own line.
-                'regex': r'''
+                'regex': tw.dedent(r'''
                     (?xm)
                         \bversion
                         (\ *=\ *)
                         .+?(,
                         \ *[\n\r])+
-                    ''',
+                    '''),
                 'subst': r"version\1'{version}'\2"
             }],
         }, {
             'globs': ['__init__.py'],
             'grafts': [{
-                'regex': r'''
+                'regex': tw.dedent(r'''
                     (?xm)
                         \b__version__
                         (\ *=\ *)
                         (.+[\r\n])
-                    ''',
+                    '''),
                 'subst': r"__version__\1'{version}'"
             }, {
-                'regex': r'''
+                'regex': tw.dedent(r'''
                     (?xm)
                         \b__updated__
                         (\ *=\ *)
                         (.+[\r\n])
-                    ''',
+                    '''),
                 'subst': r"__updated__\1'{release_date}'"
             }],
         }, {
