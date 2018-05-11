@@ -5,9 +5,9 @@
 #    pip-compile --output-file requirements.txt setup.py
 #
 boltons==18.0.0
-colorama==0.3.9           # via rainbow-logging-handler
+#colorama==0.3.9           # via rainbow-logging-handler
 ipython-genutils==0.2.0
-logutils==0.3.5           # via rainbow-logging-handler
+#logutils==0.3.5           # via rainbow-logging-handler
 rainbow_logging_handler==2.2.2
 spectate==0.1.0
 toolz==0.9.0
