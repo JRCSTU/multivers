@@ -308,17 +308,17 @@ def test_CfgFilesRegistry_consolidate_posix_1():
         ('/d/foo/bar/.appname', None),
         ('/d/foo/bar/.appname', 'appname_config.py'),
         ('/d/foo/bar/.appname', 'appname_config.json'),
-        ('/d/foo\Bar/dooba/doo', None),
-        ('/d/foo\Bar/dooba/doo', None),
-        ('/d/foo\Bar/dooba/doo', None),
-        ('/d/foo\Bar/dooba/doo', None),
+        ('/d/foo\\Bar/dooba/doo', None),
+        ('/d/foo\\Bar/dooba/doo', None),
+        ('/d/foo\\Bar/dooba/doo', None),
+        ('/d/foo\\Bar/dooba/doo', None),
     ]
     c = cmdlets.CfgFilesRegistry()
     cons = c._consolidate(visited)
 
     exp = [
         ('/d/foo/bar/.appname', ['appname_config.py', 'appname_config.json']),
-        ('/d/foo\Bar/dooba/doo', []),
+        ('/d/foo\\Bar/dooba/doo', []),
     ]
     #print('FF\n', cons)
     assert cons == exp
@@ -329,17 +329,17 @@ def test_CfgFilesRegistry_consolidate_posix_2():
         ('/c/Big/BEAR/.appname', 'appname_persist.json'),
         ('/c/Big/BEAR/.appname', 'appname_config.py'),
         ('/c/Big/BEAR/.appname', None),
-        ('/d/foo\Bar/dooba/doo', None),
-        ('/d/foo\Bar/dooba/doo', None),
-        ('/d/foo\Bar/dooba/doo', None),
-        ('/d/foo\Bar/dooba/doo', None),
+        ('/d/foo\\Bar/dooba/doo', None),
+        ('/d/foo\\Bar/dooba/doo', None),
+        ('/d/foo\\Bar/dooba/doo', None),
+        ('/d/foo\\Bar/dooba/doo', None),
     ]
     c = cmdlets.CfgFilesRegistry()
     cons = c._consolidate(visited)
 
     exp = [
         ('/c/Big/BEAR/.appname', ['appname_persist.json', 'appname_config.py']),
-        ('/d/foo\Bar/dooba/doo', []),
+        ('/d/foo\\Bar/dooba/doo', []),
     ]
     #print('FF\n', cons)
     assert cons == exp
@@ -350,17 +350,17 @@ def test_CfgFilesRegistry_consolidate_win_1():
         ('D:\\foo\\bar\\.appname', None),
         ('D:\\foo\\bar\\.appname', 'appname_config.py'),
         ('D:\\foo\\bar\\.appname', 'appname_config.json'),
-        ('d:\\foo\Bar\\dooba\\doo', None),
-        ('d:\\foo\Bar\\dooba\\doo', None),
-        ('d:\\foo\Bar\\dooba\\doo', None),
-        ('d:\\foo\Bar\\dooba\\doo', None),
+        ('d:\\foo\\Bar\\dooba\\doo', None),
+        ('d:\\foo\\Bar\\dooba\\doo', None),
+        ('d:\\foo\\Bar\\dooba\\doo', None),
+        ('d:\\foo\\Bar\\dooba\\doo', None),
     ]
     c = cmdlets.CfgFilesRegistry()
     cons = c._consolidate(visited)
 
     exp = [
         ('D:\\foo\\bar\\.appname', ['appname_config.py', 'appname_config.json']),
-        ('d:\\foo\Bar\\dooba\\doo', []),
+        ('d:\\foo\\Bar\\dooba\\doo', []),
     ]
     #print('FF\n', cons)
     assert cons == exp
@@ -371,17 +371,17 @@ def test_CfgFilesRegistry_consolidate_win_2():
         ('C:\\Big\\BEAR\\.appname', 'appname_persist.json'),
         ('C:\\Big\\BEAR\\.appname', 'appname_config.py'),
         ('C:\\Big\\BEAR\\.appname', None),
-        ('D:\\foo\Bar\\dooba\\doo', None),
-        ('D:\\foo\Bar\\dooba\\doo', None),
-        ('D:\\foo\Bar\\dooba\\doo', None),
-        ('D:\\foo\Bar\\dooba\\doo', None),
+        ('D:\\foo\\Bar\\dooba\\doo', None),
+        ('D:\\foo\\Bar\\dooba\\doo', None),
+        ('D:\\foo\\Bar\\dooba\\doo', None),
+        ('D:\\foo\\Bar\\dooba\\doo', None),
     ]
     c = cmdlets.CfgFilesRegistry()
     cons = c._consolidate(visited)
 
     exp = [
         ('C:\\Big\\BEAR\\.appname', ['appname_persist.json', 'appname_config.py']),
-        ('D:\\foo\Bar\\dooba\\doo', []),
+        ('D:\\foo\\Bar\\dooba\\doo', []),
     ]
     #print('FF\n', cons)
     assert cons == exp

@@ -1197,14 +1197,82 @@ def class_config_yaml(cls, outer_cfg, classes=None):
 trc.Configurable.class_config_yaml = classmethod(class_config_yaml)  # type: ignore
 
 
+def order_class_hierarchy(classes, mro_func=lambda cls: cls.mro()):
+    visited_index = {}  # invered-hierarchy index: {sub: super}
+    ordered = []
+
+    def visit_class(cls):
+        nonlocal ordered
+
+        assert cls not in visited_index, (cls, visited_index, classes)
+
+        mro = mro_func(cls)
+        if set(mro) & visited_index.keys():
+            ## Visiting a super of existing classes.
+            #
+            ## Replace all it's subclasses in`ordered` with it.
+            #
+            ordered = [c for c in ordered
+                       if c not in mro]
+
+        ordered.extend(mro)
+
+        ## Update all subclasses in hierarchy-index.
+        #
+        for sub in mro:
+            visited_index[sub] = cls
+
+    for cls in classes:
+        if cls not in visited_index:
+            visit_class(cls)
+
+    return ordered
+
+
+def generate_class_hierarchy_text(classes):
+    def class_line(cls):
+        bases = [base for base in cls.__bases__
+                 if base in classes]
+        max_class_name_len = max(len(cls.__name__) for cls in classes)
+        if bases:
+            fmt = '  %%-%is --> %%s' % max_class_name_len
+            return fmt % (cls.__name__,
+                          ', '.join(b.__name__ for b in bases))
+        else:
+            fmt = '  %%-%is' % max_class_name_len
+            return fmt % cls.__name__
+
+    return '\n'.join(class_line(cls) for cls in classes)
+
+
 def generate_config_file_yaml(self, classes=None):
     """generate default config file from Configurables"""
     from ruamel.yaml.comments import CommentedMap  # @UnresolvedImport
-
-    cfg = CommentedMap()
-    cfg.yaml_set_start_comment("Configuration file for %s.\n" % self.name)
+    import ipython_genutils.text as tw
 
     classes = self.classes if classes is None else classes
+
+    def mro_for_specs(cls):
+        return [sub for sub in cls.mro() if issubclass(sub, Spec)]
+
+    ordered_classes = order_class_hierarchy(
+        classes,
+        mro_func=mro_for_specs)
+
+    class_hiearchy = generate_class_hierarchy_text(ordered_classes)
+    start_comment = tw.dedent("""
+        ####################################
+        Configuration file for `%s`.
+
+        Class-hierarchy:
+        %s
+        ####################################
+
+    """) % (self.root_object().name, class_hiearchy)
+
+    cfg = CommentedMap()
+    cfg.yaml_set_start_comment(start_comment)
+
     config_classes = list(self._classes_with_config_traits(classes))
     for cls in config_classes:
         cls.class_config_yaml(cfg)
