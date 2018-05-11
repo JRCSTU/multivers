@@ -140,15 +140,17 @@ def ensure_dir_exists(path, mode=0o755):
         raise OSError("%r exists but is not a directory" % path)
 
 
-def find_git_root() -> Optional[Path]:
+def find_git_root(path=None) -> Optional[Path]:
     """
-    Search dirs up for a Git-repo.
+    Search dirs up for a Git-repo like ``git rev-parse --show-toplevel``.
 
+    :param path:
+        where to start searching from, `cwd` if not given.
     :return:
         a `pathlib` native path, or None
     """
-    ## TODO: See GitPython for a comprehensive way.
-    cwd = Path()
+    if not path:
+        cwd = Path()
     for f in itt.chain([cwd], cwd.resolve().parents):
         if (f / '.git').is_dir():
             return f

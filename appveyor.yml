@@ -28,8 +28,7 @@ init:
   - python --version
 
 install:
-  - python -m pip install -U pip
-  - pip install --upgrade setuptools pip
+  - python -m pip install --upgrade setuptools pip
   - pip install -q -r requirements_dev.txt
 
   - pip install -e pvlib[test]
