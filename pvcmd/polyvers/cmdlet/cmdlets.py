@@ -830,7 +830,7 @@ class Cmd(trc.Application, Spec):
         #  NOTE: Patch default-value on `Cmd` so all subcmds load same configs.
     ).tag(config=True)
 
-    _cfgfiles_registry: CfgFilesRegistry = None
+    _cfgfiles_registry: Optional[CfgFilesRegistry] = None
 
     @property
     def loaded_config_files(self):

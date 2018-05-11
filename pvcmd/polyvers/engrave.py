@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 
 
 def _as_glob_pattern_pair(fpath):
-    """
+    """24
     Add '**' in relative names, eliminate comments and split in positive/negatives
 
     :return:
@@ -244,8 +244,9 @@ class FileProcessor(cmdlets.Spec):
                 doing="globbing %.21s%s" % (eng, eng.globs)
             ):
                 globs = [project.interp(gs, _escaped_for='glob')
-                         for gs in eng.globs]
-                hit_fpaths = glob_files(
+                         for gs in eng.globs
+                         if gs is not None]
+                hit_fpaths = glob_files(  # type: ignore (interp may be null)
                     globs, mybase=mybase or '.', other_bases=other_bases)
                 glob_truples.extend((project, eng, fp)
                                     for fp in hit_fpaths)

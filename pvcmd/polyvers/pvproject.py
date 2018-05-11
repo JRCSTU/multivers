@@ -54,7 +54,7 @@ def _slices_to_ids(slices, thelist):
 
 class Graft(cmdlets.Replaceable, cmdlets.Printable, yu.YAMLable, cmdlets.Spec):
     """Instructions on how to search'n replace some text."""
-    regex = Unicode(
+    regex: str = Unicode(  # type: ignore
         read_only=True,
         config=True,
         help="The regular-expressions to search within the byte-contents of files."
@@ -74,6 +74,7 @@ class Graft(cmdlets.Replaceable, cmdlets.Printable, yu.YAMLable, cmdlets.Spec):
 
     def regex_resolved(self, project: 'Project') -> Pattern:
         v = project.interp(self.regex, _escaped_for='regex')
+        assert v, (self.regex, project)
         return re.compile(v.encode(self.encoding))
 
     subst = Unicode(
@@ -93,6 +94,7 @@ class Graft(cmdlets.Replaceable, cmdlets.Printable, yu.YAMLable, cmdlets.Spec):
 
     def subst_resolved(self, project: 'Project') -> bytes:
         v = project.interp(self.subst)
+        assert v, (self.subst, project)
         return v.encode(self.encoding)
 
     slices = UnionTrait(
@@ -578,7 +580,7 @@ class Project(cmdlets.Replaceable, cmdlets.Printable, yu.YAMLable, cmdlets.Spec)
         help="""
         """)
 
-    default_version_bump = Unicode(
+    default_version_bump: str = Unicode(  # type: ignore #@IgnorePep8
         '^1',
         config=True,
         help="Which relative version to imply if not given in the cmd-line."

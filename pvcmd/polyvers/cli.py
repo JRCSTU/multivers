@@ -126,7 +126,7 @@ class PolyversCmd(cmdlets.Cmd, yu.YAMLable):
 
         return paths
 
-    _git_root: Path = None
+    _git_root: Optional[Path] = None
 
     @property
     def git_root(self) -> Path:

@@ -158,7 +158,8 @@ class BumpCmd(cli._SubCmd):
     def _make_commit_message(self, *projects: pvproject.Project):
         from ipython_genutils.text import indent, wrap_paragraphs
 
-        sub_summary = ', '.join(prj.interp(prj.message_summary) for prj in projects)
+        sub_summary = ', '.join(prj.interp(prj.message_summary)  # type: ignore (null item)
+                                for prj in projects)
         summary = self.interp(self.message_summary, sub_summary=sub_summary)
 
         text_lines: List[str] = []
