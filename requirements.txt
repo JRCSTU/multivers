@@ -13,4 +13,4 @@ spectate==0.2.2
 toolz==0.9.0
 ruamel.yaml==0.15.42
 contextvars==2.3; python_version < '3.7'
-packaging==17.1
+packaging==18.0
