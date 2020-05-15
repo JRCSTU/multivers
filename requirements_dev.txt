@@ -1,7 +1,7 @@
 #pip==10.0.0
 #pip-tools==1.11.0
 #wheel==0.31.0
-flake8==3.5.0
+flake8==3.6.0
 flake8-builtins==1.4.1
 flake8-mutable==1.2.0
 #coverage==4.5.1
